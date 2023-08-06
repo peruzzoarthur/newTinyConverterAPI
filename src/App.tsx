@@ -3,8 +3,7 @@ import "./index.css";
 
 const App = () => {
   return (
-    <main className="flex justify-center items-center bg-gradient-to-b from-sky-400 to-sky-200 h-[100vh] w-full">
-      <h1 className="text-lime-500">The New Tiny Converter</h1>
+    <main className="flex justify-center items-center bg-[radial-gradient(ellipse_at_right,_var(--tw-gradient-stops))] from-sky-400 to-indigo-900">
       <Outlet />
     </main>
   );
