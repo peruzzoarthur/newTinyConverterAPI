@@ -29,7 +29,7 @@ function Home() {
   return (
     <div>
       <Search convertValue={convertValue} />
-      <h2>Graphs</h2>
+      {/* <h2>Graphs</h2> */}
     </div>
   );
 }
