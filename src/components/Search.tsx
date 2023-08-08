@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { TERipple } from "tw-elements-react";
-
 import axios from "axios";
 import { pi } from "./pi";
 import CurrenciesList from "./CurrenciesList";
@@ -59,57 +58,68 @@ function Search({}: SearchProps) {
         <p className="text-sm mt-1">
           Choose value and currencies for convertion:
         </p>
-        <div className="relative flex mt-5 md:mt-4 items-center">
+        <div className="relative flex items-center">
           <div className="relative flex flex-col mt-5 md:mt-4 items-center">
-            <p className="text-sm ">Amount to convert:</p>
+            <div className="relative flex mb ">
+              <p className="text-sm pb-14">Amount to convert:</p>
+            </div>
             <input
               type="number"
-              placeholder="Select amount"
+              placeholder="1"
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="absolute mt-1 w-32 max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+              className="text-right absolute mt-6 w-28 max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
             />{" "}
-            <TERipple>
-              <button
-                onClick={handleConvertButtonClick}
-                type="button"
-                className="inline-block rounded border-2 mt-4
+          </div>
+          <div className="relative flex flex-col-reverse mt-2 m-6 md:mt-4 items-center">
+            <CurrenciesList
+              selectedCurrency={toCurrency}
+              setSelectedCurrency={setToCurrency}
+            />
+            <p className="text-sm mt-2">To currency:</p>
+
+            <CurrenciesList
+              selectedCurrency={fromCurrency}
+              setSelectedCurrency={setFromCurrency}
+            />
+            <p className="text-sm mt-2">From currency:</p>
+          </div>
+          <TERipple>
+            <button
+              onClick={handleConvertButtonClick}
+              type="button"
+              className="inline-block rounded border-2 mt-4
                 border-primary-100 px-3 pb-[6px] pt-2 text-xs font-medium
-                uppercase leading-normal text-primary-700 transition
+                leading-normal text-primary-700 transition
                 duration-150 ease-in-out hover:border-primary-accent-100
                 hover:bg-neutral-500 hover:bg-opacity-10
                 focus:border-primary-accent-100 focus:outline-none focus:ring-0
                 active:border-primary-accent-200 dark:text-primary-100
                 dark:hover:bg-neutral-100 dark:hover:bg-opacity-10"
-              >
-                {" "}
-                💸💸💸
-              </button>
-            </TERipple>
-          </div>
-          <div className="relative flex flex-col mt-5 m-8 md:mt-4 items-center">
-            <p className="text-sm mt-4">From currency:</p>
-            <CurrenciesList
-              selectedCurrency={fromCurrency}
-              setSelectedCurrency={setFromCurrency}
-            />
-
-            <p className="text-sm mt-2">To currency:</p>
-            <CurrenciesList
-              selectedCurrency={toCurrency}
-              setSelectedCurrency={setToCurrency}
-            />
-          </div>
+            >
+              {" "}
+              💸💸💸
+            </button>
+          </TERipple>
         </div>
-        {convertedAmount !== -pi && (
-          <h2>Converted Amount: {convertedAmount.toFixed(2)}</h2>
-        )}
-        {conversionDone && (
-          <h2>
-            Converted from {initialFromCurrency} to {initialToCurrency} at a
-            conversion rate of: {(initialAmount / convertedAmount).toFixed(4)}{" "}
-            for 1.
-          </h2>
-        )}
+        <section
+          className="w-400 full md:max-w-[400px] p-4 flex flex-col text-lg 
+        items-center justify-center md:px-10 lg:p-2 h-200 lg:h-[400px]
+         bg-white bg-opacity-40 backdrop-blur-lg drop-shadow-lg rounded
+          text-zinc-700"
+        >
+          {convertedAmount !== -pi && (
+            <h2 className="font-black">
+              Converted Amount: {convertedAmount.toFixed(2)}
+            </h2>
+          )}
+          {conversionDone && (
+            <h2 className="font-thin">
+              Converted from {initialFromCurrency} to {initialToCurrency} at a
+              conversion rate of {(initialAmount / convertedAmount).toFixed(4)}{" "}
+              to 1.
+            </h2>
+          )}
+        </section>
       </section>
     </main>
   );

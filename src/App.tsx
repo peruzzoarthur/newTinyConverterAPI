@@ -3,7 +3,10 @@ import "./index.css";
 
 const App = () => {
   return (
-    <main className="flex justify-center items-center bg-[radial-gradient(ellipse_at_right,_var(--tw-gradient-stops))] from-sky-400 to-indigo-900">
+    <main
+      className="flex justify-center items-center 
+      bg-[conic-gradient(at_left,_var(--tw-gradient-stops))] from-sky-400 to-blue-800"
+    >
       <Outlet />
     </main>
   );
