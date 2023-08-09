@@ -1,22 +1,20 @@
 import Search from "../components/Search";
 import axios from "axios";
 import "../index.css";
+import BuildGraph from "../components/BuildGraph";
 
 function Home() {
   const convertValue = async (
-    amount: number,
+    amount: number | undefined,
     fromCurrency: string,
     toCurrency: string
   ) => {
     try {
-      const response = await axios.post(
-        "http://localhost:3000/convert5/exchange",
-        {
-          amount,
-          base: fromCurrency,
-          symbols: toCurrency,
-        }
-      );
+      const response = await axios.post("http://localhost:3000/buildgraph", {
+        amount,
+        base: fromCurrency,
+        symbols: toCurrency,
+      });
 
       const data = response.data;
 
@@ -29,7 +27,7 @@ function Home() {
   return (
     <div>
       <Search convertValue={convertValue} />
-      {/* <h2>Graphs</h2> */}
+      {/* <BuildGraph convertValue={convertValue} /> */}
     </div>
   );
 }

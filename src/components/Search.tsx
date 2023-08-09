@@ -3,16 +3,17 @@ import { TERipple } from "tw-elements-react";
 import axios from "axios";
 import { pi } from "./pi";
 import CurrenciesList from "./CurrenciesList";
+import BuildGraph from "./BuildGraph";
 
 type SearchProps = {
   convertValue: (
-    amount: number,
+    amount: number | undefined,
     fromCurrency: string,
     toCurrency: string
   ) => Promise<void>;
 };
 
-function Search({}: SearchProps) {
+function Search({ convertValue }: SearchProps) {
   const [amount, setAmount] = useState<number>();
   const [fromCurrency, setFromCurrency] = useState("");
   const [toCurrency, setToCurrency] = useState("");
@@ -36,7 +37,7 @@ function Search({}: SearchProps) {
       const data = response.data;
       const convertedAmount = data.toAmount;
       setConvertedAmount(convertedAmount);
-      setConversionDone(true);
+      setConversionDone(false);
       setInitialFromCurrency(fromCurrency);
       setInitialToCurrency(toCurrency);
       setInitialAmount(amount);
@@ -45,14 +46,22 @@ function Search({}: SearchProps) {
     }
   }
 
-  const handleConvertButtonClick = () => {
-    handleConvertValue();
-    setConversionDone(false);
+  const handleConvertButtonClick = async () => {
+    await Promise.all([
+      convertValue(amount, fromCurrency, toCurrency),
+      handleConvertValue(),
+    ]);
+    setConversionDone(true);
   };
 
   return (
     <main className="flex justify-center items-center  h-[100vh] w-full">
-      <section className="w-full md:max-w-[500px] p-4 flex flex-col text-center items-center justify-center md:px-10 lg:p-24 h-full lg:h-[500px] bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg rounded text-zinc-700">
+      <section
+        className="w-full md:max-w-[500px] p-4 flex flex-col text-center 
+      items-center justify-center md:px-10 lg:p-24 h-full lg:h-[500px]
+       bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg 
+       rounded text-zinc-700"
+      >
         <h1 className="text-4xl font-thin">The New Tiny Converter</h1>
         <span className="text-2xl font-black">Converting Calculator</span>
         <p className="text-sm mt-1">
@@ -120,6 +129,12 @@ function Search({}: SearchProps) {
             </h2>
           )}
         </section>
+        <BuildGraph
+          convertValue={convertValue}
+          amount={amount}
+          fromCurrency={fromCurrency}
+          toCurrency={toCurrency}
+        />
       </section>
     </main>
   );
