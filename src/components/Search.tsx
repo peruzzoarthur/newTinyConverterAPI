@@ -90,58 +90,53 @@ function Search() {
 
   return (
     <main className="flex justify-center items-center h-[100vh] w-full">
-      <section
-        className="w-full md:max-w-[500px] p-4 flex flex-col text-center 
-      items-center justify-center md:px-10 lg:p-20 h-full lg:h-[800px]
-       bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg 
-       rounded text-zinc-700"
-      >
+      <section className="w-full md:max-w-[800px] p-4 flex flex-col text-center items-center justify-center md:px-10 lg:p-20 h-full lg:h-[760px] bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg rounded text-zinc-700">
         <h1 className="text-4xl font-thin">The New Tiny Converter</h1>
         <span className="text-2xl font-black">Converting Calculator</span>
         <p className="text-sm mt-1">
-          Choose value and currencies for convertion:
+          Choose value and currencies for conversion:
         </p>
-        <div className="relative flex flex-col items-center">
-          <div className="relative flex flex-col md:mt-4 items-center">
-            <input
-              type="number"
-              placeholder="1"
-              onChange={(e) => setAmount(Number(e.target.value))}
-              className="text-right absolute  mb-22 w-28 max-h-60 overflow-auto rounded-md
-               bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5
-                focus:outline-none sm:text-sm"
-            />{" "}
-          </div>
-          <div className="relative flex flex-col-reverse mt-4 m-6 md:mt-4 items-center">
-            <CurrenciesList
-              selectedCurrency={toCurrency}
-              setSelectedCurrency={setToCurrency}
-            />
-            <p className="text-sm mt-4">To currency:</p>
 
+        <div className="flex flex-row items-center">
+          <div className="mr-4">
+            <p className="text-sm mt-2">From currency:</p>
             <CurrenciesList
               selectedCurrency={fromCurrency}
               setSelectedCurrency={setFromCurrency}
             />
-            <p className="text-sm mt-6">From currency:</p>
           </div>
-          <TERipple>
-            <button
-              onClick={handleConvertButtonClick}
-              type="button"
-              className="inline-block rounded bg-neutral-100 px-6 pb-2 pt-2.5 text-xs 
-              font-medium uppercase leading-normal text-neutral-700 shadow-[0_4px_9px_-4px_#cbcbcb] t
-              ransition duration-150 ease-in-out hover:bg-neutral-100 hover:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] focus:bg-neutral-100 focus:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] focus:outline-none focus:ring-0 active:bg-neutral-200 active:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] dark:shadow-[0_4px_9px_-4px_rgba(251,251,251,0.3)] dark:hover:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] dark:focus:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] dark:active:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)]"
-            >
-              💸 Convert 💸
-            </button>
-          </TERipple>
+          <div className="mr-4">
+            <p className="text-sm mt-2">To currency:</p>
+            <CurrenciesList
+              selectedCurrency={toCurrency}
+              setSelectedCurrency={setToCurrency}
+            />
+          </div>
+          <div className="mr-4 mt-2">
+            <p className="text-sm mt-2">Amount:</p>
+            <input
+              type="number"
+              placeholder="1"
+              onChange={(e) => setAmount(Number(e.target.value))}
+              className="text-right mb-2 w-28 max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+            />
+          </div>
         </div>
+
+        <TERipple>
+          <button
+            onClick={handleConvertButtonClick}
+            type="button"
+            className="inline-block rounded bg-neutral-100 px-2 mt-2 pb-2 pt-2.5 text-xs font-medium uppercase leading-normal text-neutral-700 shadow-[0_4px_9px_-4px_#cbcbcb] transition duration-150 ease-in-out hover:bg-neutral-100 hover:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] focus:bg-neutral-100 focus:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] focus:outline-none focus:ring-0 active:bg-neutral-200 active:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] dark:shadow-[0_4px_9px_-4px_rgba(251,251,251,0.3)] dark:hover:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] dark:focus:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] dark:active:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)]"
+          >
+            💸 Convert 💸
+          </button>
+        </TERipple>
 
         {convertedAmount !== -pi && conversionDone && (
           <section
             className="w-400 full md:max-w-[400px] p-4 flex flex-col text-lg 
-            items-center justify-center md:px-10 lg:p-2 h-200 lg:h-[400px]
+            items-center justify-center md:px-10 lg:p-2 h-200 lg:h-[200px]
              bg-white bg-opacity-40 backdrop-blur-lg drop-shadow-lg rounded
               text-zinc-700 mt-4"
           >
@@ -158,8 +153,8 @@ function Search() {
 
         {conversionDone && (
           <section
-            className="w-400 full md:max-w-[400px] p-4 flex flex-col text-lg items-center 
-          justify-center md:px-10 lg:p-2 h-200 lg:h-[400px] bg-white bg-opacity-40 backdrop-blur-lg 
+            className="w-1000 full md:max-w-[1000px] p-4 flex flex-col text-lg items-center 
+          justify-center md:px-10 lg:p-2 h-400 lg:h-[900px] bg-white bg-opacity-40 backdrop-blur-lg 
           drop-shadow-lg rounded text-zinc-700 mt-4"
           >
             <div>
