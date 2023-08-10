@@ -62,12 +62,12 @@ function getDateNDaysAgo(n = 30) {
 
 app.post("/buildgraph", async (req, res) => {
   try {
-    const { amount, base, symbols } = req.body;
+    const { amount, base, symbols, timeFrame } = req.body;
     if (!amount || !base || !symbols) {
       res.status(400).json({ message: "Missing required parameters" });
       return;
     }
-    const startDate = getDateNDaysAgo();
+    const startDate = getDateNDaysAgo(timeFrame);
     const endDate = getCurrentDate();
     const url = `${timeSeriesRequestURL}?start_date=${startDate}&end_date=${endDate}&base=${base}&amount=${amount}&symbols=${symbols}`;
     const response = await fetch(url);
@@ -85,53 +85,53 @@ app.post("/buildgraph", async (req, res) => {
   }
 });
 
-app.post("/buildgraphwithtimeframe", async (req, res) => {
-  try {
-    const { amount, base, symbols, timeFrame } = req.body;
-    if (!amount || !base || !symbols || !timeFrame) {
-      res.status(400).json({ message: "Missing required parameters" });
-      return;
-    }
+// app.post("/buildgraphwithtimeframe", async (req, res) => {
+//   try {
+//     const { amount, base, symbols, timeFrame } = req.body;
+//     if (!amount || !base || !symbols || !timeFrame) {
+//       res.status(400).json({ message: "Missing required parameters" });
+//       return;
+//     }
 
-    let startDate, endDate;
+//     let startDate, endDate;
 
-    if (timeFrame === 5) {
-      startDate = getDateNDaysAgo(5);
-      endDate = getCurrentDate();
-    } else if (timeFrame === 15) {
-      startDate = getDateNDaysAgo(15);
-      endDate = getCurrentDate();
-    } else if (timeFrame === 30) {
-      startDate = getDateNDaysAgo(30);
-      endDate = getCurrentDate();
-    } else if (timeFrame === 90) {
-      startDate = getDateNDaysAgo(90);
-      endDate = getCurrentDate();
-    } else if (timeFrame === 365) {
-      startDate = getDateNDaysAgo(365);
-      endDate = getCurrentDate();
-    } else {
-      res.status(400).json({ message: "Invalid time frame" });
-      return;
-    }
+//     if (timeFrame === 5) {
+//       startDate = getDateNDaysAgo(5);
+//       endDate = getCurrentDate();
+//     } else if (timeFrame === 15) {
+//       startDate = getDateNDaysAgo(15);
+//       endDate = getCurrentDate();
+//     } else if (timeFrame === 30) {
+//       startDate = getDateNDaysAgo(30);
+//       endDate = getCurrentDate();
+//     } else if (timeFrame === 90) {
+//       startDate = getDateNDaysAgo(90);
+//       endDate = getCurrentDate();
+//     } else if (timeFrame === 365) {
+//       startDate = getDateNDaysAgo(365);
+//       endDate = getCurrentDate();
+//     } else {
+//       res.status(400).json({ message: "Invalid time frame" });
+//       return;
+//     }
 
-    const url = `${timeSeriesRequestURL}?start_date=${startDate}&end_date=${endDate}&base=${base}&amount=${amount}&symbols=${symbols}`;
-    const response = await fetch(url);
+//     const url = `${timeSeriesRequestURL}?start_date=${startDate}&end_date=${endDate}&base=${base}&amount=${amount}&symbols=${symbols}`;
+//     const response = await fetch(url);
 
-    if (!response.ok) {
-      const message = `An error has occurred: ${response.status}`;
-      throw new Error(message);
-    }
+//     if (!response.ok) {
+//       const message = `An error has occurred: ${response.status}`;
+//       throw new Error(message);
+//     }
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    res.status(200).json({
-      data: data.rates,
-    });
-  } catch (error) {
-    res.status(500).json({ message: (error as Error).message });
-  }
-});
+//     res.status(200).json({
+//       data: data.rates,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: (error as Error).message });
+//   }
+// });
 
 app.listen(3000, () => {
   console.log("NODE API RUNNING ON PORT 3000 - http://localhost:3000/convert");
