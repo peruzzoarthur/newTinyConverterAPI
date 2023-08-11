@@ -1,12 +1,12 @@
 import Search from "./components/Search";
-
+import backgroundImage from "./img/gradient.jpeg";
 import "./index.css";
 
 const App = () => {
   return (
     <main
-      className="flex justify-center items-center 
-      bg-[conic-gradient(at_left,_var(--tw-gradient-stops))] from-sky-400 to-blue-800"
+      className="flex justify-center items-center"
+      style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       <Search />
     </main>
