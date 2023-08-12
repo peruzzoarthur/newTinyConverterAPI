@@ -1,27 +1,52 @@
 import { useState, useEffect, useRef } from "react";
-import { TERipple } from "tw-elements-react";
 import axios from "axios";
 import { pi } from "./pi";
 import CurrenciesList from "./CurrenciesList";
 import { Chart, initTE } from "tw-elements";
 import tiny from "../img/tiny.png";
+import ConvertButton from "./ConvertButton";
+import GraphButton from "./GraphButton";
 
 function Search() {
   const [amount, setAmount] = useState<number>();
-  const [fromCurrency, setFromCurrency] = useState("");
-  const [toCurrency, setToCurrency] = useState("");
+  const [fromCurrency, setFromCurrency] = useState<string>("");
+  const [toCurrency, setToCurrency] = useState<string>("");
   const [convertedAmount, setConvertedAmount] = useState<number>(-pi);
-  const [conversionDone, setConversionDone] = useState(false);
-  const [initialFromCurrency, setInitialFromCurrency] = useState("");
-  const [initialToCurrency, setInitialToCurrency] = useState("");
+  const [conversionDone, setConversionDone] = useState<boolean>(false);
+  const [initialFromCurrency, setInitialFromCurrency] = useState<string>("");
+  const [initialToCurrency, setInitialToCurrency] = useState<string>("");
   const [initialAmount, setInitialAmount] = useState<number>(1);
   const [graphDays, setGraphDays] = useState<string[]>([]);
   const [graphValues, setGraphValues] = useState<number[]>([]);
-  const [isGraphBuilt, setIsGraphBuilt] = useState(false);
-  const chartCanvasRef = useRef(null);
+  const [isGraphBuilt, setIsGraphBuilt] = useState<boolean>(false);
+  const chartCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [timeFrame, setTimeFrame] = useState<number>(30);
 
-  async function handleGraphBuilding() {
+  async function handleConvertValue(): Promise<void> {
+    if (!amount || !fromCurrency || !toCurrency) {
+      return;
+    }
+    try {
+      const response = await axios.post("http://localhost:3000/convert", {
+        amount: amount,
+        base: fromCurrency,
+        symbols: toCurrency,
+      });
+      const data = response.data;
+      const convertedAmount = data.toAmount;
+      setConvertedAmount(convertedAmount);
+      setInitialFromCurrency(fromCurrency);
+      setInitialToCurrency(toCurrency);
+      setInitialAmount(amount);
+      setConversionDone(true);
+      setTimeFrame(30);
+      await handleGraphBuilding();
+    } catch (error) {
+      console.error("Error:", (error as Error).message);
+    }
+  }
+
+  async function handleGraphBuilding(): Promise<void> {
     if (!amount || !fromCurrency || !toCurrency) {
       return;
     }
@@ -49,36 +74,6 @@ function Search() {
     setTimeFrame(newTimeFrame);
   }
 
-  useEffect(() => {
-    if (conversionDone && timeFrame !== 666) {
-      handleGraphBuilding();
-    }
-  }, [conversionDone, timeFrame]);
-
-  async function handleConvertValue() {
-    if (!amount || !fromCurrency || !toCurrency) {
-      return;
-    }
-    try {
-      const response = await axios.post("http://localhost:3000/convert", {
-        amount: amount,
-        base: fromCurrency,
-        symbols: toCurrency,
-      });
-      const data = response.data;
-      const convertedAmount = data.toAmount;
-      setConvertedAmount(convertedAmount);
-      setInitialFromCurrency(fromCurrency);
-      setInitialToCurrency(toCurrency);
-      setInitialAmount(amount);
-      setConversionDone(true);
-      setTimeFrame(30);
-      await handleGraphBuilding();
-    } catch (error) {
-      console.error("Error:", (error as Error).message);
-    }
-  }
-
   async function handleConvertButtonClick() {
     setTimeFrame(30);
     setConversionDone(false);
@@ -88,13 +83,18 @@ function Search() {
   }
 
   useEffect(() => {
-    if (isGraphBuilt) {
+    if (conversionDone && timeFrame !== 666) {
+      handleGraphBuilding();
+    }
+  }, [conversionDone, timeFrame]);
+
+  useEffect(() => {
+    if (isGraphBuilt && graphDays.length > 0 && graphValues.length > 0) {
       initTE({ Chart });
       const canvasElement = chartCanvasRef.current;
 
       new Chart(canvasElement, {
         type: "line",
-
         data: {
           labels: graphDays,
           datasets: [
@@ -152,21 +152,7 @@ function Search() {
                 sm:text-sm"
             />
           </div>
-          <TERipple>
-            <button
-              onClick={handleConvertButtonClick}
-              type="button"
-              className="mt-7 inline-block rounded bg-stone-100 px-2 pb-2 pt-2.5 text-xs font-medium uppercase leading-normal
-             text-black shadow-[0_4px_9px_-4px_#cbcbcb] transition duration-150 ease-in-out hover:bg-neutral-100 
-             hover:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)]
-              focus:bg-neutral-100 focus:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] 
-              focus:outline-none focus:ring-0 active:bg-neutral-400 active:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] 
-              dark:shadow-[0_4px_9px_-4px_rgba(251,251,251,0.3)] dark:hover:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] 
-              dark:focus:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] dark:active:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)]"
-            >
-              💸 Convert 💸
-            </button>
-          </TERipple>
+          <ConvertButton onClick={handleConvertButtonClick}></ConvertButton>
         </div>
 
         {convertedAmount !== -pi && conversionDone && (
@@ -203,69 +189,26 @@ function Search() {
                 width={700}
               ></canvas>
             </div>
-            <TERipple>
-              <button
-                onClick={() => handleUpdateTimeFrame(365)}
-                type="button"
-                className="inline-block rounded bg-neutral-100 px-2 
-                mt-2 pb-2 pt-2.5 text-xs font-medium uppercase l
-                eading-normal text-neutral-700 shadow-[0_4px_9px_-4px_#cbcbcb] 
-                transition duration-150 ease-in-out hover:bg-neutral-100 
-                hover:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)]
-                 focus:bg-neutral-100 
-                focus:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] 
-                focus:outline-none focus:ring-0 active:bg-neutral-200 
-                active:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)]
-                dark:shadow-[0_4px_9px_-4px_rgba(251,251,251,0.3)] 
-                dark:hover:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] 
-                dark:focus:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] 
-                dark:active:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)]"
-              >
-                1 year
-              </button>
-            </TERipple>
-            <TERipple>
-              <button
-                onClick={() => handleUpdateTimeFrame(180)}
-                type="button"
-                className="ml-2 inline-block rounded bg-neutral-100 px-2 
-                mt-2 pb-2 pt-2.5 text-xs font-medium uppercase l
-                eading-normal text-neutral-700 shadow-[0_4px_9px_-4px_#cbcbcb] 
-                transition duration-150 ease-in-out hover:bg-neutral-100 
-                hover:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)]
-                 focus:bg-neutral-100 
-                focus:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] 
-                focus:outline-none focus:ring-0 active:bg-neutral-200 
-                active:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)]
-                dark:shadow-[0_4px_9px_-4px_rgba(251,251,251,0.3)] 
-                dark:hover:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] 
-                dark:focus:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] 
-                dark:active:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)]"
-              >
-                6 months
-              </button>
-            </TERipple>
-            <TERipple>
-              <button
-                onClick={() => handleUpdateTimeFrame(30)}
-                type="button"
-                className="ml-2 inline-block rounded bg-neutral-100 px-2 
-                mt-2 pb-2 pt-2.5 text-xs font-medium uppercase l
-                eading-normal text-neutral-700 shadow-[0_4px_9px_-4px_#cbcbcb] 
-                transition duration-150 ease-in-out hover:bg-neutral-100 
-                hover:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)]
-                 focus:bg-neutral-100 
-                focus:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)] 
-                focus:outline-none focus:ring-0 active:bg-neutral-200 
-                active:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)]
-                dark:shadow-[0_4px_9px_-4px_rgba(251,251,251,0.3)] 
-                dark:hover:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] 
-                dark:focus:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)] 
-                dark:active:shadow-[0_8px_9px_-4px_rgba(251,251,251,0.1),0_4px_18px_0_rgba(251,251,251,0.05)]"
-              >
-                30 days
-              </button>
-            </TERipple>
+            <GraphButton
+              onClick={() => handleUpdateTimeFrame(365)}
+              text="1 YEAR"
+            />
+            <GraphButton
+              onClick={() => handleUpdateTimeFrame(180)}
+              text="6 MONTHS"
+            />
+            <GraphButton
+              onClick={() => handleUpdateTimeFrame(90)}
+              text="3 MONTHS"
+            />
+            <GraphButton
+              onClick={() => handleUpdateTimeFrame(30)}
+              text="1 MONTH"
+            />
+            <GraphButton
+              onClick={() => handleUpdateTimeFrame(15)}
+              text="15 DAYS"
+            />
           </section>
         )}
       </section>

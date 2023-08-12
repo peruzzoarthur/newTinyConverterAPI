@@ -7,6 +7,22 @@ type CurrenciesListProps = {
   setSelectedCurrency: (currency: string) => void;
 };
 
+async function populateSymbolList(): Promise<string[]> {
+  const requestURL = "https://api.exchangerate.host/latest";
+  try {
+    const response = await fetch(requestURL);
+    if (!response.ok) {
+      throw new Error(`An error has occurred: ${response.status}`);
+    }
+    const data = await response.json();
+    const symbols = Object.keys(data.rates);
+    return symbols;
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
 const CurrenciesList = ({
   selectedCurrency,
   setSelectedCurrency,
@@ -84,21 +100,5 @@ const CurrenciesList = ({
     </div>
   );
 };
-
-async function populateSymbolList(): Promise<string[]> {
-  const requestURL = "https://api.exchangerate.host/latest";
-  try {
-    const response = await fetch(requestURL);
-    if (!response.ok) {
-      throw new Error(`An error has occurred: ${response.status}`);
-    }
-    const data = await response.json();
-    const symbols = Object.keys(data.rates);
-    return symbols;
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
 
 export default CurrenciesList;
