@@ -1,26 +1,42 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import axios from "axios";
 import { pi } from "./pi";
 import CurrenciesList from "./CurrenciesList";
-import { Chart, initTE } from "tw-elements";
 import tiny from "../img/tiny.png";
 import ConvertButton from "./ConvertButton";
 import GraphButton from "./GraphButton";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+} from "chart.js";
+
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 
 function Search() {
   const [amount, setAmount] = useState<number>();
   const [fromCurrency, setFromCurrency] = useState<string>("");
   const [toCurrency, setToCurrency] = useState<string>("");
   const [convertedAmount, setConvertedAmount] = useState<number>(-pi);
-  const [conversionDone, setConversionDone] = useState<boolean>(false);
+
+  const [isConversionDone, setIsConversionDone] = useState<boolean>(false);
+
   const [initialFromCurrency, setInitialFromCurrency] = useState<string>("");
   const [initialToCurrency, setInitialToCurrency] = useState<string>("");
   const [initialAmount, setInitialAmount] = useState<number>(1);
   const [graphDays, setGraphDays] = useState<string[]>([]);
   const [graphValues, setGraphValues] = useState<number[]>([]);
+  const [isgraphData, setIsGraphData] = useState<boolean>(false);
+
+  const [timeFrame, setTimeFrame] = useState<number>(0);
+  const [isTimeFrameUpdated, setIsTimeFrameUpdated] = useState<boolean>(false);
+
   const [isGraphBuilt, setIsGraphBuilt] = useState<boolean>(false);
-  const chartCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [timeFrame, setTimeFrame] = useState<number>(30);
+  const [chartData, setChartData] = useState<Chart | any>();
+  const [chartConfig, setChartConfig] = useState<Chart | any>();
 
   async function handleConvertValue(): Promise<void> {
     if (!amount || !fromCurrency || !toCurrency) {
@@ -38,77 +54,89 @@ function Search() {
       setInitialFromCurrency(fromCurrency);
       setInitialToCurrency(toCurrency);
       setInitialAmount(amount);
-      setConversionDone(true);
-      setTimeFrame(30);
-      await handleGraphBuilding();
+      setIsConversionDone(true);
     } catch (error) {
       console.error("Error:", (error as Error).message);
     }
   }
+
+  useEffect(() => {
+    handleConvertValue();
+  }),
+    [amount, fromCurrency, toCurrency];
+
+  async function handleGraphData(): Promise<void> {
+    if (isConversionDone) {
+      try {
+        const response = await axios.post("http://localhost:3000/buildgraph", {
+          amount: amount,
+          base: fromCurrency,
+          symbols: toCurrency,
+          timeFrame: timeFrame,
+        });
+        const data = response.data.data;
+        const days = Object.keys(data);
+        const values = days.map((date) => data[date][toCurrency]);
+        setGraphDays(days);
+        setGraphValues(values);
+        setIsGraphData(true);
+      } catch (error) {
+        console.error("Error:", (error as Error).message);
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (isConversionDone) {
+      handleGraphData();
+    }
+  }, [isConversionDone, amount, fromCurrency, toCurrency, timeFrame]);
 
   async function handleGraphBuilding(): Promise<void> {
-    if (!amount || !fromCurrency || !toCurrency) {
-      return;
-    }
-    try {
-      const response = await axios.post("http://localhost:3000/buildgraph", {
-        amount: amount,
-        base: fromCurrency,
-        symbols: toCurrency,
-        timeFrame: timeFrame,
-      });
-      setTimeFrame(31);
-      const data = response.data.data;
-      const days = Object.keys(data);
-      const values = days.map((date) => data[date][toCurrency]);
-      setGraphDays(days);
-      setGraphValues(values);
-      setIsGraphBuilt(true);
-    } catch (error) {
-      console.error("Error:", (error as Error).message);
-    }
+    const graphData = {
+      labels: graphDays,
+      datasets: [
+        {
+          label: "Currency Conversion",
+          data: graphValues,
+          borderColor: "#000000",
+          pointBackgroundColor: "#B1B1B1",
+        },
+      ],
+    };
+
+    const config = {
+      type: "line",
+      data: chartData,
+    };
+    setChartData(graphData);
+    setChartConfig(config);
+
+    setIsGraphBuilt(true);
   }
 
+  useEffect(() => {
+    if (isgraphData) {
+      handleGraphBuilding();
+    }
+  }, [graphDays, graphValues, isgraphData]);
+
   async function handleUpdateTimeFrame(newTimeFrame: number) {
-    setIsGraphBuilt(false);
-    setTimeFrame(newTimeFrame);
+    await setTimeFrame(newTimeFrame);
+    await setIsTimeFrameUpdated(true);
   }
 
   async function handleConvertButtonClick() {
-    setTimeFrame(30);
-    setConversionDone(false);
-    setIsGraphBuilt(false);
-    await handleConvertValue();
-    await handleGraphBuilding();
+    Promise.all([
+      setIsTimeFrameUpdated(false),
+      handleUpdateTimeFrame(30),
+      handleConvertValue(),
+    ]);
   }
 
-  useEffect(() => {
-    if (conversionDone && timeFrame !== 666) {
-      handleGraphBuilding();
-    }
-  }, [conversionDone, timeFrame]);
-
-  useEffect(() => {
-    if (isGraphBuilt && graphDays.length > 0 && graphValues.length > 0) {
-      initTE({ Chart });
-      const canvasElement = chartCanvasRef.current;
-
-      new Chart(canvasElement, {
-        type: "line",
-        data: {
-          labels: graphDays,
-          datasets: [
-            {
-              label: "Currency Conversion",
-              data: graphValues,
-              borderColor: "#000000",
-              pointBackgroundColor: "#B1B1B1",
-            },
-          ],
-        },
-      });
-    }
-  }, [isGraphBuilt, graphDays, graphValues]);
+  async function handleUpdateTimeButtonClick(newTimeFrame: number) {
+    await handleUpdateTimeFrame(newTimeFrame);
+  }
 
   return (
     <main className="flex justify-center items-center h-[100vh] w-full">
@@ -118,7 +146,7 @@ function Search() {
       >
         <h1 className="text-4xl font-thin">The New Tiny Converter</h1>
         <span className="text-2xl font-black">Converting Calculator</span>
-        <img src={tiny} alt={tiny} width={300} />
+        <img src={tiny} alt="I Only Grow" width={300} />
         <p className="text-sm mt-1">
           Choose value and currencies for conversion:
         </p>
@@ -155,7 +183,7 @@ function Search() {
           <ConvertButton onClick={handleConvertButtonClick}></ConvertButton>
         </div>
 
-        {convertedAmount !== -pi && conversionDone && (
+        {convertedAmount !== -pi && isConversionDone && (
           <section
             className="w-400 full md:max-w-[400px] p-4 flex flex-col text-lg 
             items-center justify-center md:px-10 lg:p-2 h-200 lg:h-[200px]
@@ -173,40 +201,33 @@ function Search() {
           </section>
         )}
 
-        {isGraphBuilt && conversionDone && (
+        {isGraphBuilt && isConversionDone && (
           <section
             className="w-7000 full md:max-w-[500px] p-4 text-lg items-center 
           justify-center md:px-10 lg:p-2 h-500 lg:h-[500px] bg-white bg-opacity-40 backdrop-blur-lg 
           drop-shadow-lg rounded text-zinc-700 mt-4"
           >
             <div>
-              <canvas
-                ref={chartCanvasRef}
-                data-te-chart="line"
-                data-te-dataset-label="Conversion value"
-                data-te-labels={JSON.stringify(graphDays)}
-                data-te-dataset-data={JSON.stringify(graphValues)}
-                width={700}
-              ></canvas>
+              <Line data={chartData} options={chartConfig} />
             </div>
             <GraphButton
-              onClick={() => handleUpdateTimeFrame(365)}
+              onClick={() => handleUpdateTimeButtonClick(365)}
               text="1 YEAR"
             />
             <GraphButton
-              onClick={() => handleUpdateTimeFrame(180)}
+              onClick={() => handleUpdateTimeButtonClick(180)}
               text="6 MONTHS"
             />
             <GraphButton
-              onClick={() => handleUpdateTimeFrame(90)}
+              onClick={() => handleUpdateTimeButtonClick(90)}
               text="3 MONTHS"
             />
             <GraphButton
-              onClick={() => handleUpdateTimeFrame(30)}
+              onClick={() => handleUpdateTimeButtonClick(30)}
               text="1 MONTH"
             />
             <GraphButton
-              onClick={() => handleUpdateTimeFrame(15)}
+              onClick={() => handleUpdateTimeButtonClick(15)}
               text="15 DAYS"
             />
           </section>
