@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { pi } from "./pi";
 import CurrenciesList from "./CurrenciesList";
@@ -21,19 +21,15 @@ function Search() {
   const [fromCurrency, setFromCurrency] = useState<string>("");
   const [toCurrency, setToCurrency] = useState<string>("");
   const [convertedAmount, setConvertedAmount] = useState<number>(-pi);
-
   const [isConversionDone, setIsConversionDone] = useState<boolean>(false);
-
   const [initialFromCurrency, setInitialFromCurrency] = useState<string>("");
   const [initialToCurrency, setInitialToCurrency] = useState<string>("");
   const [initialAmount, setInitialAmount] = useState<number>(1);
   const [graphDays, setGraphDays] = useState<string[]>([]);
   const [graphValues, setGraphValues] = useState<number[]>([]);
   const [isgraphData, setIsGraphData] = useState<boolean>(false);
-
   const [timeFrame, setTimeFrame] = useState<number>(0);
   const [isTimeFrameUpdated, setIsTimeFrameUpdated] = useState<boolean>(false);
-
   const [isGraphBuilt, setIsGraphBuilt] = useState<boolean>(false);
   const [chartData, setChartData] = useState<Chart | any>();
   const [chartConfig, setChartConfig] = useState<Chart | any>();
@@ -104,14 +100,12 @@ function Search() {
         },
       ],
     };
-
     const config = {
       type: "line",
       data: chartData,
     };
     setChartData(graphData);
     setChartConfig(config);
-
     setIsGraphBuilt(true);
   }
 
@@ -122,8 +116,8 @@ function Search() {
   }, [graphDays, graphValues, isgraphData]);
 
   async function handleUpdateTimeFrame(newTimeFrame: number) {
-    await setTimeFrame(newTimeFrame);
-    await setIsTimeFrameUpdated(true);
+    setTimeFrame(newTimeFrame);
+    setIsTimeFrameUpdated(true);
   }
 
   async function handleConvertButtonClick() {
