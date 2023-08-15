@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import axios from "axios";
 import { pi } from "./pi";
 import CurrenciesList from "./CurrenciesList";
@@ -109,7 +109,7 @@ function Search() {
     setIsGraphBuilt(true);
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isgraphData) {
       handleGraphBuilding();
     }
@@ -120,13 +120,13 @@ function Search() {
     setIsTimeFrameUpdated(true);
   }
 
-  async function handleConvertButtonClick() {
-    Promise.all([
-      setIsTimeFrameUpdated(false),
-      handleUpdateTimeFrame(30),
-      handleConvertValue(),
-    ]);
-  }
+  // async function handleConvertButtonClick() {
+  //   Promise.all([
+  //     setIsTimeFrameUpdated(false),
+  //     handleUpdateTimeFrame(30),
+  //     handleConvertValue(),
+  //   ]);
+  // }
 
   async function handleUpdateTimeButtonClick(newTimeFrame: number) {
     await handleUpdateTimeFrame(newTimeFrame);
@@ -174,7 +174,7 @@ function Search() {
                 sm:text-sm"
             />
           </div>
-          <ConvertButton onClick={handleConvertButtonClick}></ConvertButton>
+          {/* <ConvertButton onClick={handleConvertButtonClick}></ConvertButton> */}
         </div>
 
         {convertedAmount !== -pi && isConversionDone && (
