@@ -3,7 +3,6 @@ import axios from "axios";
 import { pi } from "./pi";
 import CurrenciesList from "./CurrenciesList";
 import tiny from "../img/tiny.png";
-import tiny2 from "../img/tiny2.png";
 // import ConvertButton from "./ConvertButton";
 import GraphButton from "./GraphButton";
 import { Line } from "react-chartjs-2";
@@ -24,64 +23,39 @@ function Search() {
   const [fromCurrency, setFromCurrency] = useState<string>("");
   const [toCurrency, setToCurrency] = useState<string>("");
   const [convertedAmount, setConvertedAmount] = useState<number>(-pi);
+  const [isConversionDone, setIsConversionDone] = useState<boolean>(false);
   const [initialFromCurrency, setInitialFromCurrency] = useState<string>("");
   const [initialToCurrency, setInitialToCurrency] = useState<string>("");
   const [initialAmount, setInitialAmount] = useState<number>(1);
   const [graphDays, setGraphDays] = useState<string[]>([]);
   const [graphValues, setGraphValues] = useState<number[]>([]);
+  const [isgraphData, setIsGraphData] = useState<boolean>(false);
   const [timeFrame, setTimeFrame] = useState<number>(0);
-
+  const [isTimeFrameUpdated, setIsTimeFrameUpdated] = useState<boolean>(false);
+  const [isGraphBuilt, setIsGraphBuilt] = useState<boolean>(false);
   const [chartData, setChartData] = useState<Chart | any>();
   const [chartConfig, setChartConfig] = useState<Chart | any>();
-
-  const [isgraphData, setIsGraphData] = useState<boolean>(false);
-  const [isGraphBuilt, setIsGraphBuilt] = useState<boolean>(false);
-  const [isConversionDone, setIsConversionDone] = useState<boolean>(false);
-  const [isTimeFrameUpdated, setIsTimeFrameUpdated] = useState<boolean>(false);
   const [cryptoEnabled, setCryptoEnabled] = useState<boolean>(false);
 
   async function handleConvertValue(): Promise<void> {
     if (!amount || !fromCurrency || !toCurrency) {
       return;
     }
-    if (!cryptoEnabled) {
-      try {
-        const response = await axios.post("http://localhost:3000/convert", {
-          amount: amount,
-          base: fromCurrency,
-          symbols: toCurrency,
-        });
-        const data = response.data;
-        const convertedAmount = data.toAmount;
-        setConvertedAmount(convertedAmount);
-        setInitialFromCurrency(fromCurrency);
-        setInitialToCurrency(toCurrency);
-        setInitialAmount(amount);
-        setIsConversionDone(true);
-      } catch (error) {
-        console.error("Error:", (error as Error).message);
-      }
-    }
-    if (cryptoEnabled) {
-      try {
-        const response = await axios.post(
-          "http://localhost:3000/convertCrypto",
-          {
-            amount: amount,
-            base: fromCurrency,
-            symbols: toCurrency,
-          }
-        );
-        const data = response.data;
-        const convertedAmount = data.toAmount;
-        setConvertedAmount(convertedAmount);
-        setInitialFromCurrency(fromCurrency);
-        setInitialToCurrency(toCurrency);
-        setInitialAmount(amount);
-        setIsConversionDone(true);
-      } catch (error) {
-        console.error("Error:", (error as Error).message);
-      }
+    try {
+      const response = await axios.post("http://localhost:3000/convert", {
+        amount: amount,
+        base: fromCurrency,
+        symbols: toCurrency,
+      });
+      const data = response.data;
+      const convertedAmount = data.toAmount;
+      setConvertedAmount(convertedAmount);
+      setInitialFromCurrency(fromCurrency);
+      setInitialToCurrency(toCurrency);
+      setInitialAmount(amount);
+      setIsConversionDone(true);
+    } catch (error) {
+      console.error("Error:", (error as Error).message);
     }
   }
 
@@ -91,10 +65,9 @@ function Search() {
     [amount, fromCurrency, toCurrency];
 
   async function handleGraphData(): Promise<void> {
-    // if (isConversionDone) {
-    if (!cryptoEnabled) {
+    if (isConversionDone) {
       try {
-        const response = await axios.post("http://localhost:3000/buildGraph", {
+        const response = await axios.post("http://localhost:3000/buildgraph", {
           amount: amount,
           base: fromCurrency,
           symbols: toCurrency,
@@ -113,38 +86,8 @@ function Search() {
   }
 
   useEffect(() => {
-    if (isConversionDone && !cryptoEnabled) {
+    if (isConversionDone) {
       handleGraphData();
-    }
-  }, [isConversionDone, amount, fromCurrency, toCurrency, timeFrame]);
-
-  async function handleCryptoGraphData(): Promise<void> {
-    if (cryptoEnabled) {
-      try {
-        const response = await axios.post(
-          "http://localhost:3000/buildCryptoGraph",
-          {
-            amount: amount,
-            base: fromCurrency,
-            symbols: toCurrency,
-            timeFrame: timeFrame,
-          }
-        );
-        const data = response.data.data;
-        const days = Object.keys(data);
-        const values = days.map((date) => data[date][toCurrency]);
-        setGraphDays(days);
-        setGraphValues(values);
-        setIsGraphData(true);
-      } catch (error) {
-        console.error("Error:", (error as Error).message);
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (isConversionDone && cryptoEnabled) {
-      handleCryptoGraphData();
     }
   }, [isConversionDone, amount, fromCurrency, toCurrency, timeFrame]);
 
@@ -169,7 +112,7 @@ function Search() {
     setIsGraphBuilt(true);
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isgraphData) {
       handleGraphBuilding();
     }
@@ -180,30 +123,8 @@ function Search() {
     setIsTimeFrameUpdated(true);
   }
 
-  async function handleUpdateTimeButtonClick(
-    newTimeFrame: number
-  ): Promise<void> {
+  async function handleUpdateTimeButtonClick(newTimeFrame: number) {
     await handleUpdateTimeFrame(newTimeFrame);
-  }
-
-  async function handleCryptoOnOffEffect() {
-    console.log("handleCryptoOnOffEffect called");
-    setAmount(0);
-    setFromCurrency("");
-    setToCurrency("");
-    setConvertedAmount(-pi);
-    setInitialFromCurrency("");
-    setInitialToCurrency("");
-    setInitialAmount(1);
-    setGraphDays([]);
-    setGraphValues([]);
-    setTimeFrame(0);
-    setChartData(null);
-    setChartConfig(null);
-    setIsConversionDone(false);
-    setIsGraphData(false);
-    setIsGraphBuilt(false);
-    setIsTimeFrameUpdated(false);
   }
 
   return (
@@ -212,63 +133,28 @@ function Search() {
         className="w-full md:max-w-[600px] p-4 flex flex-col text-center items-center justify-center md:px-10 lg:p-20 h-full 
       lg:h-[880px] bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg rounded text-slate-200"
       >
-        <div>
-          <OnOffCrypto
-            onClick={handleCryptoOnOffEffect}
-            cryptoEnabled={cryptoEnabled}
-            setCryptoEnabled={setCryptoEnabled}
-          />
-        </div>
-
         <h1 className="text-4xl font-thin">The New Tiny Converter</h1>
-
         <span className="text-2xl font-black">Converting Calculator</span>
-        {!cryptoEnabled && <img src={tiny} alt="I Only Grow" width={300} />}
-        {cryptoEnabled && <img src={tiny2} alt="I Only Grow 2" width={300} />}
-
+        <img src={tiny} alt="I Only Grow" width={300} />
         <p className="text-sm mt-1">
           Choose value and currencies for conversion:
         </p>
 
         <div className="flex flex-row items-center">
-          {!cryptoEnabled && (
-            <div className="mr-4">
-              <p className="text-sm mt-2">From Currency:</p>
-              <CurrenciesList
-                selectedCurrency={fromCurrency}
-                setSelectedCurrency={setFromCurrency}
-              />
-            </div>
-          )}
-          {cryptoEnabled && (
-            <div className="mr-4">
-              <p className="text-sm mt-2">From Currency:</p>
-              <CryptoList
-                selectedCurrency={fromCurrency}
-                setSelectedCurrency={setFromCurrency}
-              />
-            </div>
-          )}
-
-          {!cryptoEnabled && (
-            <div className="mr-4">
-              <p className="text-sm mt-2">To Currency:</p>
-              <CurrenciesList
-                selectedCurrency={toCurrency}
-                setSelectedCurrency={setToCurrency}
-              />
-            </div>
-          )}
-          {cryptoEnabled && (
-            <div className="mr-4">
-              <p className="text-sm mt-2">To Currency:</p>
-              <CryptoList
-                selectedCurrency={toCurrency}
-                setSelectedCurrency={setToCurrency}
-              />
-            </div>
-          )}
-
+          <div className="mr-4">
+            <p className="text-sm mt-2">From Currency:</p>
+            <CurrenciesList
+              selectedCurrency={fromCurrency}
+              setSelectedCurrency={setFromCurrency}
+            />
+          </div>
+          <div className="mr-4">
+            <p className="text-sm mt-2">To Currency:</p>
+            <CurrenciesList
+              selectedCurrency={toCurrency}
+              setSelectedCurrency={setToCurrency}
+            />
+          </div>
           <div className="mr-4 mt-2">
             <p className="text-sm mt-2">Amount:</p>
             <input
@@ -336,6 +222,14 @@ function Search() {
           </section>
         )}
       </section>
+      <CryptoList
+        selectedCurrency={toCurrency}
+        setSelectedCurrency={setToCurrency}
+      />
+      <OnOffCrypto
+        cryptoEnabled={cryptoEnabled}
+        setCryptoEnabled={setCryptoEnabled}
+      />
     </main>
   );
 }
