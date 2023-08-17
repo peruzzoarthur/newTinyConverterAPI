@@ -12,8 +12,8 @@ const GraphButton: React.FC<ConvertButtonProps> = ({ onClick, text }) => {
       <button
         onClick={onClick}
         type="button"
-        className="inline-block rounded bg-neutral-100 px-2 
-                mt-2 mr-2 pb-2 pt-2.5 text-xs font-medium uppercase l
+        className="inline-block rounded bg-neutral-100 px-1 
+                mt-1 mr-1 pb-1 pt-1 text-xs font-medium uppercase l
                 eading-normal text-neutral-700 shadow-[0_4px_9px_-4px_#cbcbcb] 
                 transition duration-150 ease-in-out hover:bg-neutral-100 
                 hover:shadow-[0_8px_9px_-4px_rgba(203,203,203,0.3),0_4px_18px_0_rgba(203,203,203,0.2)]

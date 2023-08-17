@@ -57,7 +57,10 @@ const CryptoList = ({
              sm:text-sm"
           >
             <span className="block truncate">{selectedCurrency}</span>
-            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+            <span
+              className="pointer-events-none absolute inset-y-0 right-0 flex 
+            items-center pr-2"
+            >
               <ChevronUpDownIcon
                 className="h-5 w-5 text-gray-100"
                 aria-hidden="true"
@@ -70,13 +73,17 @@ const CryptoList = ({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Listbox.Options className="absolute mt-1 w-28 max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+            <Listbox.Options
+              className="absolute mt-1 w-28 max-h-40 overflow-auto 
+            rounded-md bg-stone-200 py-1 text-base shadow-lg ring-1
+             ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+            >
               {symbols.map((c) => (
                 <Listbox.Option
                   key={c}
                   className={({ active }) =>
                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                      active ? "bg-amber-100 text-cyan-900" : "text-gray-900"
+                      active ? "bg-amber-400 text-black" : "text-gray-900"
                     }`
                   }
                   value={c}
@@ -91,7 +98,10 @@ const CryptoList = ({
                         {c}
                       </span>
                       {selected ? (
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
+                        <span
+                          className="absolute inset-y-0 left-0 flex items-center pl-3
+                         text-amber-400"
+                        >
                           <CheckIcon className="h-5 w-5" aria-hidden="true" />
                         </span>
                       ) : null}

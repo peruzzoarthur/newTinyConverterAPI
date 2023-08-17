@@ -12,14 +12,14 @@ function OnOffCrypto({
   onClick,
 }: OnOffCryptoProps) {
   return (
-    <div className="py-4">
+    <div className="pt-2">
       {" "}
       <Switch
         checked={cryptoEnabled}
         onChange={setCryptoEnabled}
         onClick={onClick}
         className={`
-        ${cryptoEnabled ? "bg-zinc-900" : "bg-zinc-700"}
+        ${cryptoEnabled ? "bg-zinc-800" : "bg-zinc-700"}
         relative inline-flex h-[24px] w-[48px] shrink-0 cursor-pointer 
         rounded-full border-2 border-transparent transition-colors 
         duration-200 ease-in-out focus:outline-none 

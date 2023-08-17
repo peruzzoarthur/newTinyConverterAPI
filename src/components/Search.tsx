@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { pi } from "./pi";
 import CurrenciesList from "./CurrenciesList";
@@ -16,6 +16,8 @@ import {
 } from "chart.js";
 import CryptoList from "./CryptoList";
 import OnOffCrypto from "./OnOffCrypto";
+import greyBackgroundImage from "../img/gradient.jpeg";
+import cryptoBackgroundImage from "../img/testBackground.jpeg";
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 
@@ -29,7 +31,7 @@ function Search() {
   const [initialAmount, setInitialAmount] = useState<number>(1);
   const [graphDays, setGraphDays] = useState<string[]>([]);
   const [graphValues, setGraphValues] = useState<number[]>([]);
-  const [timeFrame, setTimeFrame] = useState<number>(0);
+  const [timeFrame, setTimeFrame] = useState<number>(30);
 
   const [chartData, setChartData] = useState<Chart | any>();
   const [chartConfig, setChartConfig] = useState<Chart | any>();
@@ -40,10 +42,20 @@ function Search() {
   const [isTimeFrameUpdated, setIsTimeFrameUpdated] = useState<boolean>(false);
   const [cryptoEnabled, setCryptoEnabled] = useState<boolean>(false);
 
+  const debouncedInput = debounce((value: number) => {
+    setAmount(value);
+  }, 300);
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = Number(e.target.value);
+    debouncedInput(value);
+  }
+
   async function handleConvertValue(): Promise<void> {
     if (!amount || !fromCurrency || !toCurrency) {
       return;
     }
+
     if (!cryptoEnabled) {
       try {
         const response = await axios.post("http://localhost:3000/convert", {
@@ -84,37 +96,63 @@ function Search() {
       }
     }
   }
+  const debouncedConvertValue = debounce(handleConvertValue);
 
   useEffect(() => {
-    handleConvertValue();
-  }),
-    [amount, fromCurrency, toCurrency];
+    debouncedConvertValue();
+  }, [amount, fromCurrency, toCurrency]);
 
   async function handleGraphData(): Promise<void> {
-    // if (isConversionDone) {
-    if (!cryptoEnabled) {
-      try {
-        const response = await axios.post("http://localhost:3000/buildGraph", {
-          amount: amount,
-          base: fromCurrency,
-          symbols: toCurrency,
-          timeFrame: timeFrame,
-        });
-        const data = response.data.data;
-        const days = Object.keys(data);
-        const values = days.map((date) => data[date][toCurrency]);
-        setGraphDays(days);
-        setGraphValues(values);
-        setIsGraphData(true);
-      } catch (error) {
-        console.error("Error:", (error as Error).message);
+    if (timeFrame > 365) {
+      if (!cryptoEnabled) {
+        try {
+          const response = await axios.post(
+            "http://localhost:3000/buildBiggerGraph",
+            {
+              amount: amount,
+              base: fromCurrency,
+              symbols: toCurrency,
+              timeFrame: timeFrame,
+            }
+          );
+          const data = response.data.data;
+          const days = Object.keys(data);
+          const values = days.map((date) => data[date][toCurrency]);
+          setGraphDays(days);
+          setGraphValues(values);
+          setIsGraphData(true);
+        } catch (error) {
+          console.error("Error:", (error as Error).message);
+        }
+      }
+    } else {
+      if (!cryptoEnabled) {
+        try {
+          const response = await axios.post(
+            "http://localhost:3000/buildGraph",
+            {
+              amount: amount,
+              base: fromCurrency,
+              symbols: toCurrency,
+              timeFrame: timeFrame,
+            }
+          );
+          const data = response.data.data;
+          const days = Object.keys(data);
+          const values = days.map((date) => data[date][toCurrency]);
+          setGraphDays(days);
+          setGraphValues(values);
+          setIsGraphData(true);
+        } catch (error) {
+          console.error("Error:", (error as Error).message);
+        }
       }
     }
   }
-
+  const debouncedGraphData = debounce(handleGraphData);
   useEffect(() => {
     if (isConversionDone && !cryptoEnabled) {
-      handleGraphData();
+      debouncedGraphData();
     }
   }, [isConversionDone, amount, fromCurrency, toCurrency, timeFrame]);
 
@@ -141,10 +179,10 @@ function Search() {
       }
     }
   }
-
+  const debouncedCryptoGraphData = debounce(handleCryptoGraphData);
   useEffect(() => {
     if (isConversionDone && cryptoEnabled) {
-      handleCryptoGraphData();
+      debouncedCryptoGraphData();
     }
   }, [isConversionDone, amount, fromCurrency, toCurrency, timeFrame]);
 
@@ -156,7 +194,9 @@ function Search() {
           label: "Currency Conversion",
           data: graphValues,
           borderColor: "#000000",
-          pointBackgroundColor: "#B1B1B1",
+          tension: 0.1,
+          borderWidth: 0.5,
+          pointStyle: false,
         },
       ],
     };
@@ -168,10 +208,10 @@ function Search() {
     setChartConfig(config);
     setIsGraphBuilt(true);
   }
-
+  const debouncedGraphBuilding = debounce(handleGraphBuilding);
   useEffect(() => {
     if (isgraphData) {
-      handleGraphBuilding();
+      debouncedGraphBuilding();
     }
   }, [graphDays, graphValues, isgraphData]);
 
@@ -187,17 +227,16 @@ function Search() {
   }
 
   async function handleCryptoOnOffEffect() {
-    console.log("handleCryptoOnOffEffect called");
     setAmount(0);
     setFromCurrency("");
     setToCurrency("");
     setConvertedAmount(-pi);
     setInitialFromCurrency("");
     setInitialToCurrency("");
-    setInitialAmount(1);
+    setInitialAmount(0);
     setGraphDays([]);
     setGraphValues([]);
-    setTimeFrame(0);
+    setTimeFrame(30);
     setChartData(null);
     setChartConfig(null);
     setIsConversionDone(false);
@@ -206,11 +245,42 @@ function Search() {
     setIsTimeFrameUpdated(false);
   }
 
+  function debounce(
+    cb: Promise<void> | any,
+    delay: number = 300
+  ): (...args: any) => void {
+    let timeout: NodeJS.Timeout;
+
+    return (...args: any) => {
+      clearTimeout(timeout);
+
+      timeout = setTimeout(() => {
+        cb(...args);
+      }, delay);
+    };
+  }
+
   return (
-    <main className="flex justify-center items-center h-[100vh] w-full">
+    <main
+      className="flex justify-center items-center h-[100vh] w-full"
+      style={
+        cryptoEnabled
+          ? {
+              backgroundImage: `url(${cryptoBackgroundImage})`,
+              backgroundSize: "cover",
+            }
+          : {
+              backgroundImage: `url(${greyBackgroundImage})`,
+              backgroundSize: "cover",
+            }
+      }
+    >
       <section
-        className="w-full md:max-w-[600px] p-4 flex flex-col text-center items-center justify-center md:px-10 lg:p-20 h-full 
-      lg:h-[880px] bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg rounded text-slate-200"
+        className={
+          cryptoEnabled
+            ? "w-full md:max-w-[600px] p-4 flex flex-col text-center items-center justify-center md:px-10 lg:p-20 h-full lg:h-[880px] bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg rounded text-slate-200"
+            : "w-full md:max-w-[600px] p-4 flex flex-col text-center items-center justify-center md:px-10 lg:p-20 h-full lg:h-[880px] bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg rounded text-slate-200"
+        }
       >
         <div>
           <OnOffCrypto
@@ -220,11 +290,21 @@ function Search() {
           />
         </div>
 
-        <h1 className="text-4xl font-thin">The New Tiny Converter</h1>
+        {!cryptoEnabled && (
+          <h1 className="text-4xl font-thin">The New Tiny Converter</h1>
+        )}
+
+        {cryptoEnabled && (
+          <h1 className="text-xs font-black text-amber-400">Crypto Mode On</h1>
+        )}
+
+        {cryptoEnabled && (
+          <h1 className="text-4xl font-thin">The New Tiny Converter</h1>
+        )}
 
         <span className="text-2xl font-black">Converting Calculator</span>
         {!cryptoEnabled && <img src={tiny} alt="I Only Grow" width={300} />}
-        {cryptoEnabled && <img src={tiny2} alt="I Only Grow 2" width={300} />}
+        {cryptoEnabled && <img src={tiny2} alt="I Only Grow 2" width={250} />}
 
         <p className="text-sm mt-1">
           Choose value and currencies for conversion:
@@ -271,17 +351,32 @@ function Search() {
 
           <div className="mr-4 mt-2">
             <p className="text-sm mt-2">Amount:</p>
-            <input
-              type="number"
-              placeholder="1"
-              onChange={(e) => setAmount(Number(e.target.value))}
-              className="relative mb-2 w-28 h-10 cursor-default rounded-lg
+            {!cryptoEnabled && (
+              <input
+                type="number"
+                placeholder="1"
+                onChange={handleInputChange}
+                className="relative mb-2 w-28 h-10 cursor-default rounded-lg
               bg-stone-600 py-3 pl-4 pr-2 text-right shadow-md focus:outline-none
                focus-visible:border-black focus-visible:ring-2
                 focus-visible:ring-white focus-visible:ring-opacity-75 
                 focus-visible:ring-offset-2 focus-visible:ring-offset-black
                 sm:text-sm"
-            />
+              />
+            )}
+            {cryptoEnabled && (
+              <input
+                type="number"
+                placeholder="1"
+                onChange={handleInputChange}
+                className="relative mb-2 w-28 h-10 cursor-default rounded-lg
+              bg-stone-600 py-3 pl-4 pr-2 text-right shadow-md focus:outline-none
+               focus-visible:border-black focus-visible:ring-2
+                focus-visible:ring-white focus-visible:ring-opacity-75 
+                focus-visible:ring-offset-2 focus-visible:ring-offset-black
+                sm:text-sm"
+              />
+            )}
           </div>
           {/* <ConvertButton onClick={handleConvertButtonClick}></ConvertButton> */}
         </div>
@@ -307,31 +402,58 @@ function Search() {
         {isGraphBuilt && isConversionDone && (
           <section
             className="w-7000 full md:max-w-[500px] p-4 text-lg items-center 
-          justify-center md:px-10 lg:p-2 h-500 lg:h-[500px] bg-white bg-opacity-40 backdrop-blur-lg 
-          drop-shadow-lg rounded text-zinc-700 mt-4"
+          justify-center md:px-10 lg:p-2 h-500 lg:h-[500px] bg-white bg-opacity-40 
+          backdrop-blur-lg drop-shadow-lg rounded text-zinc-700 mt-4"
           >
             <div>
-              <Line data={chartData} options={chartConfig} />
+              <Line
+                height={240}
+                width={450}
+                data={chartData}
+                options={chartConfig}
+              />
             </div>
+            {!cryptoEnabled && (
+              <GraphButton
+                onClick={() => handleUpdateTimeButtonClick(365 * 24)}
+                text="24Y"
+              />
+            )}
+            <GraphButton
+              onClick={() => handleUpdateTimeButtonClick(365 * 20)}
+              text="20Y"
+            />
+            <GraphButton
+              onClick={() => handleUpdateTimeButtonClick(365 * 10)}
+              text="10Y"
+            />
+            <GraphButton
+              onClick={() => handleUpdateTimeButtonClick(365 * 5)}
+              text="5Y"
+            />
+            <GraphButton
+              onClick={() => handleUpdateTimeButtonClick(365 * 3)}
+              text="3Y"
+            />
             <GraphButton
               onClick={() => handleUpdateTimeButtonClick(365)}
-              text="1 YEAR"
+              text="1Y"
             />
             <GraphButton
               onClick={() => handleUpdateTimeButtonClick(180)}
-              text="6 MONTHS"
+              text="6M"
             />
             <GraphButton
               onClick={() => handleUpdateTimeButtonClick(90)}
-              text="3 MONTHS"
+              text="3M"
             />
             <GraphButton
               onClick={() => handleUpdateTimeButtonClick(30)}
-              text="1 MONTH"
+              text="1M"
             />
             <GraphButton
               onClick={() => handleUpdateTimeButtonClick(15)}
-              text="15 DAYS"
+              text="15D"
             />
           </section>
         )}
